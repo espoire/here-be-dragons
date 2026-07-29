@@ -9,6 +9,8 @@ const Constants = {
     settings: 'settings',
     game: 'game',
   }),
+
+  dailyReportDelay: 1000, // milliseconds
 };
 
 deepFreeze(Constants);

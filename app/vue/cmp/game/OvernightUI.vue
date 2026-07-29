@@ -55,10 +55,10 @@ const emit = defineEmits(['exit']);
 
       <h2>Construction</h2>
 
-      <template v-if="summary.construction">
+      <template v-if="summary.construction || summary.constructionCompleted">
         <template v-if="summary.constructionTurnedInResources">
           <p v-if="!summary.constructionCompleted">I turned in the following resources for the {{ summary.construction.name }}:</p>
-          <p v-else>I turned in the last of the resources for the {{ summary.construction.name }}!</p>
+          <p v-else>I turned in the last of the resources for the {{ summary.constructionCompleted.name }}!</p>
           <div class="spaced-horizontal-list-row">
             <div v-for="(amount, resource) in summary.constructionTurnedInResources" :key="resource">
               {{ amount }}x {{ resource }}
@@ -69,11 +69,12 @@ const emit = defineEmits(['exit']);
           <p v-if="summary.returnedHome">I did not find any suitable resources for the {{ summary.construction.name }} today.</p>
           <p v-else>I did not return to the Guild in time to turn in resources tonight.</p>
         </template>
-
-        <div v-if="summary.constructionCompleted" style="position: relative; width: 100%;">
-          <p>That's everything! The {{ summary.construction.name }} is ready for construction!</p>
-          <p class="scribbled-margin-comment" v-text="summary.construction.completionComment" />
-        </div>
+        
+        <p v-if="summary.constructionCompleted" style="position: relative; width: 100%;">
+          That's everything! <br />
+          The {{ summary.constructionCompleted.name }} is ready for construction!
+          <p class="scribbled-margin-comment" v-text="summary.constructionCompleted.completionComment" />
+        </p>
         <template v-else>
           <p>So far, I have procured the following resources to construct the {{ summary.construction.name }}:</p>
           <div class="spaced-horizontal-list-row">
@@ -163,7 +164,7 @@ const emit = defineEmits(['exit']);
   .scribbled-margin-comment {
     position: absolute;
     top: 2rem;
-    right: 7rem;
+    right: 5rem;
     max-width: 20%;
     font-size: 80%;
     line-height: 0.7;

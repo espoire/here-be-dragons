@@ -1,18 +1,19 @@
 <script setup>
 import { reactive, ref, shallowRef } from 'vue';
-import Node from '/app/game/Node';
-import { randomArraySampleWithoutReplacement } from '/app/util/random';
+import Node from '/app/game/Node.js';
+import { randomArraySampleWithoutReplacement } from '/app/util/random.js';
 import OvernightUI from './OvernightUI.vue';
 import ConstructionUI from './ConstructionUI.vue';
-import Guild from '../../../game/Guild.js';
-import { deepClone } from '../../../util/object.js';
+import Guild from '/app/game/Guild.js';
+import { deepClone } from '/app/util/object.js';
+import Constants from '/app/Constants.js';
 
-const props = defineProps({
-  // settings: {
-  //   type: Object,
-  //   required: true,
-  // },
-});
+// const props = defineProps({
+//   // settings: {
+//   //   type: Object,
+//   //   required: true,
+//   // },
+// });
 
 const map = [];
 const nodes = [];
@@ -84,12 +85,15 @@ function collectResource(node) {
   }
 }
 
+const background = ref('day');
+
 function endOfDayMaybe() {
   const node = map[locY.value + coordinateOffset.y][locX.value + coordinateOffset.x];
   const returnedHome = (node.type.id === 'hub');
   const endOfDay = (returnedHome || stamina.value <= 0);
   if (!endOfDay) return;
 
+  background.value = 'night';
   returnedHomeMaybe(returnedHome);
   prepOvernightUI();
 }
@@ -125,9 +129,11 @@ function returnedHomeMaybe(returnedHome) {
 
       const completed = construction.value.completeMaybe(day.value);
       if (completed) {
-        daySummary.constructionCompleted = true;
-        // TODO react to completion
-        console.log('Construction completed:', completed);
+        daySummary.constructionCompleted = construction.value;
+
+        // Clear construction after completion
+        Guild.setConstruction(null);
+        construction.value = null;
       }
     } else {
       console.log('No resources to turn in for construction.');
@@ -151,11 +157,11 @@ function prepOvernightUI() {
   setTimeout(() => {
     console.log('Showing OvernightUI with summary object:', deepClone(daySummary));
     showOvernightUI.value = true;
-  }, 2000);
+  }, Constants.dailyReportDelay);
 }
 
 const showOvernightUI = ref(false);
-const showConstructionUI = ref(true);
+const showConstructionUI = ref(false);
 
 function onExitOvernightUI() {
   showOvernightUI.value = false;
@@ -187,11 +193,10 @@ function advanceDay() {
 
   // Age the map
   ageMap();
-
-  // Reset resources collected today
   
   // Reset daily values
   stamina.value = maxStamina.value;
+  background.value = 'day';
   eventText.value = '';
   for (const node of nodes) node.visited = false;
   for (const key in resourcesToday) delete resourcesToday[key];
@@ -242,20 +247,17 @@ const excludedResources = ['xp'];
 </script>
 
 <template>
-  <div class="wrap" :class="{
-      'stamina-any': stamina > 0,
-      'stamina-low': 1 < stamina && stamina <= 5,
-      'stamina-critical': stamina === 1,
-      'stamina-empty': stamina === 0 }"
-  >
+  <div class="wrap" :class="[{
+    'stamina-any': stamina > 0,
+    'stamina-low': 1 < stamina && stamina <= 5,
+    'stamina-critical': stamina === 1,
+    'stamina-empty': stamina === 0
+  }, background]">
     <div class="status-hud">
       <div class="numeric-stats-bar">
-        <div>
-          Stamina: <span v-text="stamina" class="stamina" /> / {{ maxStamina }}
-        </div>
-        <div>
-          XP: <span v-text="resources.xp ?? 0" /> / {{ maxXp }}
-        </div>
+        <div> Stamina: <span v-text="stamina" class="stamina" /> / {{ maxStamina }} </div>
+        <div> XP: <span v-text="resources.xp ?? 0" /> / {{ maxXp }} </div>
+        <div v-text="background === 'day' ? '🌞' : '🌙'" />
       </div>
       <div class="resources">
         <div v-for="(resource, key) in resources" :key="key">
@@ -310,6 +312,15 @@ const excludedResources = ['xp'];
   justify-content: center;
   align-items: center;
   font-size: 2.5rem;
+
+  transition: background-color 0.5s;
+
+  &.day {
+    background-color: #22443E;
+  }
+  &.night {
+    background-color: rgb(12, 12, 56);
+  }
 }
 .status-hud {
   position: absolute;

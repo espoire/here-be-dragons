@@ -45,7 +45,7 @@ const emit = defineEmits(['exit']);
         <p>Upon my safe return, the quartermaster awarded me:</p>
         <div class="spaced-horizontal-list-row">
           <div v-for="resource in summary.quartermasterBonusResources" :key="resource">
-            +1 {{ resource }}
+            1x {{ resource }}
           </div>
         </div>
       </template>
@@ -70,11 +70,11 @@ const emit = defineEmits(['exit']);
           <p v-else>I did not return to the Guild in time to turn in resources tonight.</p>
         </template>
         
-        <p v-if="summary.constructionCompleted" style="position: relative; width: 100%;">
-          That's everything! <br />
-          The {{ summary.constructionCompleted.name }} is ready for construction!
-          <p class="scribbled-margin-comment" v-text="summary.constructionCompleted.completionComment" />
-        </p>
+        <div v-if="summary.constructionCompleted" style="position: relative; width: 100%;">
+          <p>That's everything!</p>
+          <p>The {{ summary.constructionCompleted.name }} is ready for construction!</p>
+          <p class="scribbled-margin-comment">{{ summary.constructionCompleted.completionComment }}</p>
+        </div>
         <template v-else>
           <p>So far, I have procured the following resources to construct the {{ summary.construction.name }}:</p>
           <div class="spaced-horizontal-list-row">

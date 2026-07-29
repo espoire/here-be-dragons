@@ -4,7 +4,7 @@ const definitions = [{
   description: 'Erect the Guild Hall',
   justificationText: 'Provides a permanent headquarters for Guild operations.',
   benefitText: 'Members returning before nightfall receive 1 Coin.',
-  completionComment: 'Now I may finally lay down my blade and rest, for the Guild shall guard this world when I am gone.',
+  completionComment: 'At last I lay down my blade, the Guild shall guard this world now.',
   materials: [
     { id: 'coin', amount: 50 },
     { id: 'stone', amount: 20 },
@@ -116,6 +116,7 @@ export default class Construction {
   /** @type {string} The name of this construction, as displayed on the construction requisition form's "Project" field. */ description;
   /** @type {string} The justification text of this construction, as displayed on the construction requisition form's "Justification" field. */ justificationText;
   /** @type {string} The benefit text of this construction, as displayed on the construction requisition form's "Expected Benefit" field. */ benefitText;
+  /** @type {string} The comment text the hero writes in the margins of the nightly report, when this construction is completed. */ completionComment;
   /** @type {{ id: string, amount: number }[]} The materials required for this construction. */ materials;
 
   /** @type {Object<string, number>} The progress of materials collected for this construction, corresponding to the materials array. */ materialsProgress = {};
@@ -132,12 +133,13 @@ export default class Construction {
   /** @type {boolean} Whether this construction has been completed. */
   get completed() { return this.completedDay != null; }
 
-  constructor({ id, name, description, justificationText, benefitText, materials }) {
+  constructor({ id, name, description, justificationText, benefitText, completionComment, materials }) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.justificationText = justificationText;
     this.benefitText = benefitText;
+    this.completionComment = completionComment;
     this.materials = materials;
 
     // Prefill the materialsProgress object with zeros for each material.
@@ -188,6 +190,17 @@ export default class Construction {
 
     this.completedDay = day;
     return true;
+  }
+
+  /**
+   * @param {number} day
+   * @param {string} assigneeName 
+   * @param {string} approverName 
+   */
+  activate(day, assigneeName, approverName) {
+    this.assigneeName = assigneeName;
+    this.approverName = approverName;
+    this.startedDay = day;
   }
 }
 

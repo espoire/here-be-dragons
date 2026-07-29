@@ -54,8 +54,38 @@ const emit = defineEmits(['exit']);
       </p>
 
       <h2>Construction</h2>
-      <p>No project assigned.</p>
-      <p>The guild awaits new construction orders.</p>
+
+      <template v-if="summary.construction">
+        <template v-if="summary.constructionTurnedInResources">
+          <p v-if="!summary.constructionCompleted">I turned in the following resources for the {{ summary.construction.name }}:</p>
+          <p v-else>I turned in the last of the resources for the {{ summary.construction.name }}!</p>
+          <div class="spaced-horizontal-list-row">
+            <div v-for="(amount, resource) in summary.constructionTurnedInResources" :key="resource">
+              {{ amount }}x {{ resource }}
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <p v-if="summary.returnedHome">I did not find any suitable resources for the {{ summary.construction.name }} today.</p>
+          <p v-else>I did not return to the Guild in time to turn in resources tonight.</p>
+        </template>
+
+        <div v-if="summary.constructionCompleted" style="position: relative; width: 100%;">
+          <p>That's everything! The {{ summary.construction.name }} is ready for construction!</p>
+          <p class="scribbled-margin-comment" v-text="summary.construction.completionComment" />
+        </div>
+        <template v-else>
+          <p>So far, I have procured the following resources to construct the {{ summary.construction.name }}:</p>
+          <div class="spaced-horizontal-list-row">
+            <div v-for="{ id, amount } in summary.construction.materials" :key="id">
+              {{ summary.construction.materialsProgress[id] || 0 }} of {{ amount }} {{ id }}
+            </div>
+          </div>
+        </template>
+      </template>
+      <template v-else>
+        <p>I have not been assigned to any construction project.</p>
+      </template>
 
       <h2>Hero</h2>
       <div class="spaced-horizontal-list-row">
@@ -128,6 +158,16 @@ const emit = defineEmits(['exit']);
     justify-content: center;
     gap: 4rem;
     margin-top: -1rem;
+  }
+
+  .scribbled-margin-comment {
+    position: absolute;
+    top: 2rem;
+    right: 7rem;
+    max-width: 20%;
+    font-size: 80%;
+    line-height: 0.7;
+    rotate: 25deg;
   }
 }
 

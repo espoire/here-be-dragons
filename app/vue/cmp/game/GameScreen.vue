@@ -5,6 +5,7 @@ import { randomArraySampleWithoutReplacement } from '/app/util/random';
 import OvernightUI from './OvernightUI.vue';
 import ConstructionUI from './ConstructionUI.vue';
 import Guild from '../../../game/Guild.js';
+import { deepClone } from '../../../util/object.js';
 
 const props = defineProps({
   // settings: {
@@ -148,12 +149,13 @@ function prepOvernightUI() {
     completionComment: construction.value.completionComment,
   } : null;
   setTimeout(() => {
+    console.log('Showing OvernightUI with summary object:', deepClone(daySummary));
     showOvernightUI.value = true;
   }, 2000);
 }
 
 const showOvernightUI = ref(false);
-const showConstructionUI = ref(false);
+const showConstructionUI = ref(true);
 
 function onExitOvernightUI() {
   showOvernightUI.value = false;
@@ -167,8 +169,15 @@ function onExitConstructionUI() {
 
 const construction = shallowRef(Guild.getConstruction());
 function onApproveConstruction(newConstruction) {
-  construction.value = Guild.setConstruction(newConstruction);
+  construction.value = Guild.setConstruction(newConstruction, day.value);
   console.log('Approved construction:', construction.value);
+  onExitConstructionUI();
+}
+
+function onSuspendConstruction() {
+  const suspended = construction.value;
+  construction.value = Guild.setConstruction(null);
+  console.log('Suspended construction:', suspended);
   onExitConstructionUI();
 }
 
@@ -284,7 +293,12 @@ const excludedResources = ['xp'];
     </div>
   </div>
   <OvernightUI v-if="showOvernightUI" :summary="daySummary" @exit="onExitOvernightUI" />
-  <ConstructionUI v-if="showConstructionUI" @construct="onApproveConstruction" @exit="onExitConstructionUI" />
+  <ConstructionUI v-if="showConstructionUI"
+      :activeId="construction?.id"
+      @construct="onApproveConstruction"
+      @suspend="onSuspendConstruction"
+      @exit="onExitConstructionUI"
+  />
 </template>
 
 <style lang="scss" scoped>

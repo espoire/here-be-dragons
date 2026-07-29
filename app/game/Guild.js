@@ -10,11 +10,12 @@ export default class Guild {
   );
 
   /**
-   * @param {Construction} construction
+   * @param {Construction?} construction The construction to set as active, or null to clear the active construction.
    * @returns {Construction?} The construction that was set as active, or null if it failed some kind of validation check.
    */
-  static setConstruction(construction) {
-    Guild.activeConstructionId = construction.id;
+  static setConstruction(construction, day = 0, assigneeName = 'Hero', approverName = 'Jenny Erik, Guild Paper Pusher') {
+    Guild.activeConstructionId = construction?.id;
+    construction?.activate(day, assigneeName, approverName);
     return construction;
   }
 

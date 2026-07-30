@@ -1,4 +1,4 @@
-import ThreeVueInterface from '../VueInterface.js';
+import GlobalVueProps from '../VueInterface.js';
 import Settings from '../Settings.js';
 import Constants from '../Constants.js';
 import UserSettingsManager from '../UserSettingsManager.js';
@@ -29,6 +29,7 @@ export default class GameController {
 
   initialize() {
     this.hero = new Hero();
+    this.hero.updateVue();
   }
 
   static onSettingsClicked() {
@@ -37,6 +38,6 @@ export default class GameController {
 
   static setMode(mode) {
     if (Settings.test?.log?.uiModeChanges) console.log(`Setting mode to ${mode}`);
-    ThreeVueInterface.props.mode = mode;
+    GlobalVueProps.mode = mode;
   }
 }

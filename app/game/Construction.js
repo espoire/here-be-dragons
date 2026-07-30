@@ -117,6 +117,15 @@ export default class Construction {
     return this.#list.filter(construction => !construction.completed);
   }
 
+  /**
+   * @param {string} constructionId The programmatic ID of the construction to check.
+   * @returns {boolean?} True if the construction is complete, false if not, or null if the construction ID is invalid.
+   */
+  static isComplete(constructionId) {
+    const construction = this.getById(constructionId);
+    return construction?.completed;
+  }
+
   /** @type {number} */ index;
   /** @type {string} The textual programmatic ID of this construction. */ id;
   /** @type {string} The name of this construction, as displayed on the during-exploration "current goal" HUD. */ name;

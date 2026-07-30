@@ -7,7 +7,7 @@ import Constants from '../Constants.js';
 
 const modes = Constants.modes;
 
-// Receive as app.provide() / inject() so we can more easily expose to ThreeVueInterface
+// Receive as app.provide() / inject() so we can more easily expose to VueInterface
 const props = inject('props');
 </script>
 
@@ -15,7 +15,7 @@ const props = inject('props');
   <div class="vueAppWrap">
     <TitleScreen v-if="props.mode === modes.title" :userSettings="props.userSettings" />
     <SettingsScreen v-if="props.mode === modes.settings" :settings="props.userSettings" />
-    <GameScreen v-if="props.mode === modes.game" /> <!-- :settings="props.userSettings" -->
+    <GameScreen v-if="props.mode === modes.game" :hero="props.hero" />
   </div>
 </template>
 

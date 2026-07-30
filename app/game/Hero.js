@@ -1,4 +1,5 @@
 import { randomArrayElement, weightedRandomArrayElement } from "../util/random.js";
+import GlobalVueProps from "../VueInterface.js";
 
 const heroNames = {
   male: [
@@ -93,14 +94,31 @@ const heroGenderWeights = [
 ];
 
 export default class Hero {
-  /** @type {string} The name of this hero. */
-  name;
+  /** @type {string} The name of this hero. */ #name;
+  /** @type {string} The gender of this hero. No gameplay effects, but alters some naming and dialogue text. */ #gender;
+  /** @type {number} How far this hero can still move before the end of today. */ #stamina = 10;
+  /** @type {number} How far this hero can move in a day. */ #maxStamina = 10;
+  /** @type {number} The current level of this hero. */ #level = 1;
+  /** @type {number} The current experience points of this hero. */ #xp = 0;
+  /** @type {number} The experience points required for this hero to reach the next level. */ #xpToNextLevel = 10;
+
+  get name() { return this.#name; }
+  get gender() { return this.#gender; }
+  get stamina() { return this.#stamina; }
+  set stamina(value) { this.#stamina = value; this.updateVue(); }
+  get maxStamina() { return this.#maxStamina; }
+  set maxStamina(value) { this.#maxStamina = value; this.updateVue(); }
+  get level() { return this.#level; }
+  get xp() { return this.#xp; }
+  set xp(value) { this.#xp = value; this.updateVue(); }
+  get xpToNextLevel() { return this.#xpToNextLevel; }
+  set xpToNextLevel(value) { this.#xpToNextLevel = value; this.updateVue(); }
 
   constructor(config) {
     if (config) {
       const { name, gender } = config;
-      this.name = name;
-      this.gender = gender;
+      this.#name = name;
+      this.#gender = gender;
     } else {
       this.randomize();
     }
@@ -111,7 +129,22 @@ export default class Hero {
   }
 
   randomize() {
-    this.gender = weightedRandomArrayElement(heroGenders, heroGenderWeights);
-    this.name = Hero.randomName(this.gender);
+    this.#gender = weightedRandomArrayElement(heroGenders, heroGenderWeights);
+    this.#name = Hero.randomName(this.#gender);
+  }
+
+  /**
+   * To be called when the hero rests for the night.
+   * @mutates this.stamina Restores to maximum.
+   * In future, this method will also heal some HP.
+   */
+  rest() { this.stamina = this.#maxStamina; }
+
+  updateVue() {
+    const vm = GlobalVueProps.hero;
+    vm.stamina.current = this.#stamina;
+    vm.stamina.max = this.#maxStamina;
+    vm.xp.current = this.#xp;
+    vm.xp.nextLevel = this.#xpToNextLevel;
   }
 }

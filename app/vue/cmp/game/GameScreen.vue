@@ -1,20 +1,26 @@
 <script setup>
 import { reactive, ref, shallowRef } from 'vue';
 import Node from '/app/game/Node.js';
-import { randomArraySampleWithoutReplacement } from '/app/util/random.js';
 import OvernightUI from './OvernightUI.vue';
 import ConstructionUI from './ConstructionUI.vue';
 import Guild from '/app/game/Guild.js';
 import { deepClone } from '/app/util/object.js';
 import Constants from '/app/Constants.js';
-import Globals from '../../../Globals.js';
+import Globals from '/app/Globals.js';
+import { getQuartermasterBonusResources } from '/app/game/quartermaster.js';
 
-// const props = defineProps({
-//   // settings: {
-//   //   type: Object,
-//   //   required: true,
-//   // },
-// });
+const props = defineProps({
+  hero: {
+    stamina: {
+      current: Number,
+      max: Number,
+    },
+    xp: {
+      current: Number,
+      nextLevel: Number,
+    },
+  },
+});
 
 const map = [];
 const nodes = [];
@@ -52,7 +58,7 @@ const resources = reactive({});
 const resourcesToday = reactive({});
 
 function onClickNode(x, y) {
-  if (stamina.value <= 0) return; // Can't move if out of stamina
+  if (Globals.game.hero.stamina <= 0) return; // Can't move if out of stamina
 
   moveToNode(x, y);
   endOfDayMaybe();
@@ -64,26 +70,39 @@ function moveToNode(x, y) {
   locY.value = y;
 
   // Spend stamina
-  stamina.value -= 1;
+  Globals.game.hero.stamina -= 1;
   
   // If node is fresh (not visited), collect resources if applicable
   const node = map[locY.value + coordinateOffset.y][locX.value + coordinateOffset.x];
-  collectResource(node);
+  collectResourceFromNode(node);
   
   // Mark node as visited
   if (!node.visited) daySummary.nodesVisited = (daySummary.nodesVisited ?? 0) + 1;
   node.visited = true;
 }
 
-function collectResource(node) {
+function collectResourceFromNode(node) {
   if (node && !node.visited) {
     const resource = node.type.resource;
     if (resource) {
       eventText.value = `+1 ${resource}!`;
-      resources[resource] = (resources[resource] ?? 0) + 1;
-      resourcesToday[resource] = (resourcesToday[resource] ?? 0) + 1;
+      gainResource(resource, 1);
     }
   }
+}
+
+function gainResource(resource, amount = 1) {
+  if (resource === 'xp') {
+    gainXp(amount);
+  } else {
+    resources[resource] = (resources[resource] ?? 0) + amount;
+  }
+
+  resourcesToday[resource] = (resourcesToday[resource] ?? 0) + amount;
+}
+
+function gainXp(amount = 1) {
+  Globals.game.hero.xp += amount;
 }
 
 const background = ref('day');
@@ -91,7 +110,7 @@ const background = ref('day');
 function endOfDayMaybe() {
   const node = map[locY.value + coordinateOffset.y][locX.value + coordinateOffset.x];
   const returnedHome = (node.type.id === 'hub');
-  const endOfDay = (returnedHome || stamina.value <= 0);
+  const endOfDay = (returnedHome || Globals.game.hero.stamina <= 0);
   if (!endOfDay) return;
 
   background.value = 'night';
@@ -108,13 +127,13 @@ function returnedHomeMaybe(returnedHome) {
   daySummary.returnedHome = true;
 
   // Award "Quartermaster" bonus: +1 of 2 random resources collected today
-  const collectedToday = Object.keys(resourcesToday);
-  const sample = randomArraySampleWithoutReplacement(collectedToday, 2);
-  if (sample.length > 0) {
-    eventText.value = `Returned home! Bonus: ${sample.map(s => `+1 ${s}`).join(', ')}`;
-    daySummary.quartermasterBonusResources = sample;
-    for (const resource of sample) {
-      resources[resource] = (resources[resource] ?? 0) + 1;
+  const bonus = getQuartermasterBonusResources(resourcesToday);
+  const bonusTypes = Object.keys(bonus);
+  if (bonusTypes.length > 0) {
+    eventText.value = `Returned home! Bonus: ${bonusTypes.map(s => `+1 ${s}`).join(', ')}`;
+    daySummary.quartermasterBonusResources = bonusTypes; // TODO support non-1 amounts
+    for (const type of bonusTypes) {
+      gainResource(type, bonus[type]);
     }
   } else {
     eventText.value = 'Returned home! No resources collected today, so no bonus.';
@@ -145,8 +164,8 @@ function returnedHomeMaybe(returnedHome) {
 function prepOvernightUI() {
   daySummary.resources = { ...resourcesToday };
   daySummary.hero = {
-    level: 1,
-    xp: resources.xp ?? 0,
+    level: Globals.game.hero.level,
+    xp: Globals.game.hero.xp,
     daysUntilRetirement: 3,
   };
   daySummary.construction = construction.value ? {
@@ -196,7 +215,7 @@ function advanceDay() {
   ageMap();
   
   // Reset daily values
-  stamina.value = maxStamina.value;
+  Globals.game.hero.rest();
   background.value = 'day';
   eventText.value = '';
   for (const node of nodes) node.visited = false;
@@ -226,9 +245,6 @@ function distanceFromPlayer(x, y) {
   return hexDistance(locX.value, locY.value, x, y);
 }
 
-const stamina = ref(10);
-const maxStamina = ref(10);
-const maxXp = ref(10);
 const day = ref(0);
 const daySummary = reactive({});
 
@@ -249,15 +265,15 @@ const excludedResources = ['xp'];
 
 <template>
   <div class="wrap" :class="[{
-    'stamina-any': stamina > 0,
-    'stamina-low': 1 < stamina && stamina <= 5,
-    'stamina-critical': stamina === 1,
-    'stamina-empty': stamina === 0
+    'stamina-any': hero.stamina.current > 0,
+    'stamina-low': 1 < hero.stamina.current && hero.stamina.current <= 5,
+    'stamina-critical': hero.stamina.current === 1,
+    'stamina-empty': hero.stamina.current === 0
   }, background]">
     <div class="status-hud">
       <div class="numeric-stats-bar">
-        <div> Stamina: <span v-text="stamina" class="stamina" /> / {{ maxStamina }} </div>
-        <div> XP: <span v-text="resources.xp ?? 0" /> / {{ maxXp }} </div>
+        <div> Stamina: <span v-text="props.hero.stamina.current" class="stamina" /> / {{ props.hero.stamina.max }} </div>
+        <div> XP: <span v-text="props.hero.xp.current" /> / {{ props.hero.xp.nextLevel }} </div>
         <div v-text="background === 'day' ? '🌞' : '🌙'" />
       </div>
       <div class="resources">

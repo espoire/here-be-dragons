@@ -114,6 +114,17 @@ export default class Hero {
   get xpToNextLevel() { return this.#xpToNextLevel; }
   set xpToNextLevel(value) { this.#xpToNextLevel = value; this.updateVue(); }
 
+  /** @type {{ x: number, y: number}} */ #position = { x: 0, y: 0 };
+  get position() { return { ...this.#position }; }
+  set position({ x, y }) { this.#position.x = x; this.#position.y = y; this.updateVue(); }
+
+  /** @type {{ [resourceType: string]: number }} */
+  #resources = {};
+  get resources() { return { ...this.#resources }; }
+  /** @type {{ [resourceType: string]: number }} */
+  #resourcesToday = {};
+  get resourcesToday() { return { ...this.#resourcesToday }; }
+
   constructor(config) {
     if (config) {
       const { name, gender } = config;
@@ -134,11 +145,42 @@ export default class Hero {
   }
 
   /**
+   * @param {number} [restQuality=0] A modifier to apply to tomorrow's Stamina.
+   * 
    * To be called when the hero rests for the night.
    * @mutates this.stamina Restores to maximum.
    * In future, this method will also heal some HP.
    */
-  rest() { this.stamina = this.#maxStamina; }
+  rest(restQuality = 0) { 
+    this.stamina = this.#maxStamina + restQuality;
+  }
+
+  dailyReset() {
+    this.#resourcesToday = {};
+  }
+
+  gainResource(resource, amount = 1) {
+    if (resource === 'xp') {
+      this.xp += amount;
+    } else {
+      this.#resources[resource] = (this.#resources[resource] ?? 0) + amount;
+    }
+
+    this.#resourcesToday[resource] = (this.#resourcesToday[resource] ?? 0) + amount;
+  }
+
+  /**
+   * @param {{ [resourceType: string]: number }} resourcesToLose
+   */
+  loseResources(resourcesToLose) {
+    for (const [resource, amount] of Object.entries(resourcesToLose)) {
+      if (resource === 'xp') {
+        this.xp = Math.max(0, this.xp - amount);
+      } else {
+        this.#resources[resource] = Math.max(0, (this.#resources[resource] ?? 0) - amount);
+      }
+    }
+  }
 
   updateVue() {
     const vm = GlobalVueProps.hero;
@@ -146,5 +188,7 @@ export default class Hero {
     vm.stamina.max = this.#maxStamina;
     vm.xp.current = this.#xp;
     vm.xp.nextLevel = this.#xpToNextLevel;
+    vm.position = this.position;
+    vm.resources = this.resources;
   }
 }

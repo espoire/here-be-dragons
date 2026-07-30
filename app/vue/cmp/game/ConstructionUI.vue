@@ -10,6 +10,8 @@ const props = defineProps({
   activeId: String,
 });
 
+console.log('ConstructionUI props:', props.activeId);
+
 const availableConstructions = Construction.getAvailableConstructions();
 
 const currentFormIndex = ref(0);

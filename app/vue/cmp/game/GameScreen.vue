@@ -1,267 +1,55 @@
 <script setup>
-import { reactive, ref, shallowRef } from 'vue';
-import Node from '/app/game/Node.js';
 import OvernightUI from './OvernightUI.vue';
 import ConstructionUI from './ConstructionUI.vue';
-import Guild from '/app/game/Guild.js';
-import { deepClone } from '/app/util/object.js';
-import Constants from '/app/Constants.js';
 import Globals from '/app/Globals.js';
-import { getQuartermasterBonusResources } from '/app/game/quartermaster.js';
-import Construction from '../../../game/Construction.js';
+import HexTileMap from '/app/game/hex/HexTileMap.js';
+import { tips } from './dailyTips.js';
+import { computed } from 'vue';
+import { not, nullish } from '/app/util/Util.js';
 
 const props = defineProps({
   hero: {
-    stamina: {
-      current: Number,
-      max: Number,
-    },
-    xp: {
-      current: Number,
-      nextLevel: Number,
-    },
+    xp: { current: Number, nextLevel: Number },
+    stamina: { current: Number, max: Number },
+    position: { x: Number, y: Number },
+    resources: Object, // { [resourceType: string]: number }
+  },
+  world: {
+    origin: { x: Number, y: Number },
+    radius: Number,
+    map: Array, // Rectangular array of { x, y, renderX, renderY, distance, type, visited }, some array locations contain nulls.
+  },
+  activeConstruction: {
+    id: String,
+    name: String,
+    materials: Object, // { [resourceType: string]: number }
+    materialsProgress: Object, // { [resourceType: string]: number }
+  },
+  game: {
+    eventText: String,
+    day: Number,
+    time: String, // 'day' or 'night'
+    showOvernightUi: Boolean,
+    showConstructionUi: Boolean,
+    daySummary: Object,
   },
 });
 
-const map = [];
-const nodes = [];
-const radius = Guild.mapRadius;
-const coordinateOffset = { x: radius, y: radius };
-
-function initMap() {
-  for (let row = 0; row < 2 * radius + 1; row++) {
-    const rowWidth = 2 * radius + 1 - Math.abs(radius - row);
-    const rowOffset = Math.max(0, radius - row);
-    map.push([]);
-  
-    for (let col = rowOffset; col < rowOffset + rowWidth; col++) {
-      const x = col - coordinateOffset.x;
-      const y = row - coordinateOffset.y;
-      
-      const node = new Node(x, y);
-  
-      nodes.push(node);
-      map[row][col] = node;
-    }
-  }
-}
-
-initMap();
-
-function ageMap(days = 1) {
-  for (const node of nodes) node.age(days);
-}
-
-const locX = ref(0);
-const locY = ref(0);
-
-const resources = reactive({});
-const resourcesToday = reactive({});
-
-function onClickNode(x, y) {
-  if (Globals.game.hero.stamina <= 0) return; // Can't move if out of stamina
-
-  moveToNode(x, y);
-  endOfDayMaybe();
-}
-
-function moveToNode(x, y) {
-  // Update position
-  locX.value = x;
-  locY.value = y;
-
-  // Spend stamina
-  Globals.game.hero.stamina -= 1;
-  
-  // If node is fresh (not visited), collect resources if applicable
-  const node = map[locY.value + coordinateOffset.y][locX.value + coordinateOffset.x];
-  collectResourceFromNode(node);
-  
-  // Mark node as visited
-  if (!node.visited) daySummary.nodesVisited = (daySummary.nodesVisited ?? 0) + 1;
-  node.visited = true;
-}
-
-function collectResourceFromNode(node) {
-  if (node && !node.visited) {
-    const resource = node.type.resource;
-    if (resource) {
-      eventText.value = `+1 ${resource}!`;
-      gainResource(resource, 1);
-    }
-  }
-}
-
-function gainResource(resource, amount = 1) {
-  if (resource === 'xp') {
-    gainXp(amount);
-  } else {
-    resources[resource] = (resources[resource] ?? 0) + amount;
-  }
-
-  resourcesToday[resource] = (resourcesToday[resource] ?? 0) + amount;
-}
-
-function gainXp(amount = 1) {
-  Globals.game.hero.xp += amount;
-}
-
-const background = ref('day');
-
-function endOfDayMaybe() {
-  const node = map[locY.value + coordinateOffset.y][locX.value + coordinateOffset.x];
-  const returnedHome = (node.type.id === 'hub');
-  const endOfDay = (returnedHome || Globals.game.hero.stamina <= 0);
-  if (!endOfDay) return;
-
-  background.value = 'night';
-  returnedHomeMaybe(returnedHome);
-  prepOvernightUI();
-}
-
-function returnedHomeMaybe(returnedHome) {
-  if (!returnedHome) {
-    eventText.value = 'Out of stamina! Returning home...';
-    return;
-  }
-
-  daySummary.returnedHome = true;
-
-  // Award "Quartermaster" bonus: +1 of 2 random resources collected today
-  const bonus = getQuartermasterBonusResources(resourcesToday);
-  const bonusTypes = Object.keys(bonus);
-  if (bonusTypes.length > 0) {
-    eventText.value = `Returned home! Bonus: ${bonusTypes.map(s => `+1 ${s}`).join(', ')}`;
-    daySummary.quartermasterBonusResources = bonusTypes; // TODO support non-1 amounts
-    for (const type of bonusTypes) {
-      gainResource(type, bonus[type]);
-    }
-  } else {
-    eventText.value = 'Returned home! No resources collected today, so no bonus.';
-  }
-
-  // Turn-in resources for in-progress construction
-  if (construction.value) {
-    const turnedIn = construction.value.turnInResources(resources);
-    daySummary.constructionTurnedInResources = turnedIn;
-
-    if (turnedIn) {
-      console.log('Turned in resources for construction:', turnedIn);
-
-      const completed = construction.value.completeMaybe(day.value, Globals.game.hero.name);
-      if (completed) {
-        daySummary.constructionCompleted = construction.value;
-
-        // Clear construction after completion
-        Guild.setConstruction(null);
-        construction.value = null;
-      }
-    } else {
-      console.log('No resources to turn in for construction.');
-    }
-  }
-}
-
-function prepOvernightUI() {
-  daySummary.resources = { ...resourcesToday };
-  daySummary.hero = {
-    level: Globals.game.hero.level,
-    xp: Globals.game.hero.xp,
-    daysUntilRetirement: 3,
-  };
-  daySummary.construction = construction.value ? {
-    name: construction.value.name,
-    materials: { ...construction.value.materials }, // Clone to avoid Vue-proxying the main game data object.
-    materialsProgress: { ...construction.value.materialsProgress }, // Clone to avoid Vue-proxying the main game data object.
-    completionComment: construction.value.completionComment,
-  } : null;
-  setTimeout(() => {
-    console.log('Showing OvernightUI with summary object:', deepClone(daySummary));
-    showOvernightUI.value = true;
-  }, Constants.dailyReportDelay);
-}
-
-const showOvernightUI = ref(false);
-const showConstructionUI = ref(false);
-
-function onExitOvernightUI() {
-  showOvernightUI.value = false;
-  showConstructionUI.value = true;
-}
-
-function onExitConstructionUI() {
-  showConstructionUI.value = false;
-  advanceDay();
-}
-
-const construction = shallowRef(Construction.getById(Guild.activeConstructionId));
-function onApproveConstruction(newConstruction) {
-  construction.value = Guild.setConstruction(newConstruction, day.value, Globals.game.hero.name);
-  console.log('Approved construction:', construction.value);
-  onExitConstructionUI();
-}
-
-function onSuspendConstruction() {
-  const suspended = construction.value;
-  construction.value = Guild.setConstruction(null);
-  console.log('Suspended construction:', suspended);
-  onExitConstructionUI();
-}
-
-function advanceDay() {
-  // Advance day counter
-  day.value += 1;
-
-  // Age the map
-  ageMap();
-  
-  // Reset daily values
-  Globals.game.hero.rest();
-  background.value = 'day';
-  eventText.value = '';
-  for (const node of nodes) node.visited = false;
-  for (const key in resourcesToday) delete resourcesToday[key];
-  for (const key in daySummary) delete daySummary[key];
-
-  // Return player to the starting point
-  locX.value = 0;
-  locY.value = 0;
-}
-
-/**
- * Gets the distance between two hex coordinates, using the cube coordinate system.
- * 
- * @param x1 
- * @param y1 
- * @param x2 
- * @param y2 
- */
-function hexDistance(x1, y1, x2, y2) {
-  const z1 = -y1 - x1;
-  const z2 = -y2 - x2;
-  return (Math.abs(x1 - x2) + Math.abs(y1 - y2) + Math.abs(z1 - z2)) / 2;
-}
+function onClickTile(x, y) { Globals.game.onClickMapTile(x, y); }
+function onExitOvernightUI() { Globals.game.onExitOvernightUI(); }
+function onExitConstructionUI() { Globals.game.onExitConstructionUI(); }
+function onApproveConstruction(newConstruction) { Globals.game.onApproveConstruction(newConstruction); }
+function onSuspendConstruction() { Globals.game.onSuspendConstruction(); }
 
 function distanceFromPlayer(x, y) {
-  return hexDistance(locX.value, locY.value, x, y);
+  return HexTileMap.hexDistance(x, y, props.hero.position.x, props.hero.position.y);
 }
 
-const day = ref(0);
-const daySummary = reactive({});
-
-const tips = [
-  `
-    You are at the 🔻.
-    Click adjacent hexes to move.
-    Visiting a hex collects resources.
-    Moving uses 1 stamina. When stamina runs out or if you return home, the day will end.
-    Return home at the end for a bonus.
-  `,
-];
-
-const eventText = ref('');
-
-const excludedResources = ['xp'];
+const tiles = computed(() => {
+  const map = props.world?.map;
+  if (!map) return [];
+  return map.flat().filter(not(nullish));
+});
 </script>
 
 <template>
@@ -270,51 +58,51 @@ const excludedResources = ['xp'];
     'stamina-low': 1 < hero.stamina.current && hero.stamina.current <= 5,
     'stamina-critical': hero.stamina.current === 1,
     'stamina-empty': hero.stamina.current === 0
-  }, background]">
+  }, game.time]">
     <div class="status-hud">
       <div class="numeric-stats-bar">
-        <div> Stamina: <span v-text="props.hero.stamina.current" class="stamina" /> / {{ props.hero.stamina.max }} </div>
-        <div> XP: <span v-text="props.hero.xp.current" /> / {{ props.hero.xp.nextLevel }} </div>
-        <div v-text="background === 'day' ? '🌞' : '🌙'" />
+        <div> Stamina: <span v-text="hero.stamina.current" class="stamina" /> / {{ hero.stamina.max }} </div>
+        <div> XP: <span v-text="hero.xp.current" /> / {{ hero.xp.nextLevel }} </div>
+        <div v-text="game.time === 'day' ? '🌞' : '🌙'" />
       </div>
       <div class="resources">
-        <div v-for="(resource, key) in resources" :key="key">
-          <div v-if="!excludedResources.includes(key)">
+        <div v-for="(resource, key) in hero.resources" :key="key">
+          <div v-if="!['xp'].includes(key)">
             {{ key }}: {{ resource }}
           </div>
         </div>
       </div>
-      <div v-if="construction != null">
-        Current goal: {{ construction.name }}
+      <div v-if="game.activeConstruction != null">
+        Current goal: {{ game.activeConstruction.name }}
         <div class="construction-progress">
-          <div v-for="req in construction.materials" :key="req.id">
-            {{ req.id }}: {{ req.amount - (construction.materialsProgress[req.id] ?? 0) }}
+          <div v-for="(amount, material) in game.activeConstruction.materials" :key="material">
+            {{ material }}: {{ amount - (game.activeConstruction.materialsProgress[material] ?? 0) }}
           </div>
         </div>
       </div>
-      <div class="tip" v-if="tips[day]" v-text="tips[day]" />
-      <div class="event" v-if="eventText" v-text="eventText" />
+      <div class="tip" v-if="tips[game.day]" v-text="tips[game.day]" />
+      <div class="event" v-if="game.eventText" v-text="game.eventText" />
     </div>
     <div class="hex-map">
       <div
-          v-for="node in nodes"
-          :key="`${node.x},${node.y}`"
+          v-for="tile in tiles"
+          :key="`${tile.x},${tile.y}`"
           class="node"
-          :class="[node.type.id, `distance-${distanceFromPlayer(node.x, node.y)}`, { visited: node.visited }]"
+          :class="[tile.type.id, `distance-${distanceFromPlayer(tile.x, tile.y)}`, { visited: tile.visited }]"
           :style="{
-            left: `${node.renderX * 10}rem`,
-            top: `${node.renderY * 10}rem`,
+            left: `${tile.renderX * 10}rem`,
+            top: `${tile.renderY * 10}rem`,
           }"
-          @click="() => onClickNode(node.x, node.y)"
+          @click="() => onClickTile(tile.x, tile.y)"
       >
-        <span class="node-label" v-text="node.type.label" />
-        <div class="player-location-marker" v-if="node.x === locX && node.y === locY">🔻</div>
+        <span class="tile-label" v-text="tile.type.label" />
+        <div class="player-location-marker" v-if="tile.x === hero.position.x && tile.y === hero.position.y">🔻</div>
       </div>
     </div>
   </div>
-  <OvernightUI v-if="showOvernightUI" :summary="daySummary" @exit="onExitOvernightUI" />
-  <ConstructionUI v-if="showConstructionUI"
-      :activeId="construction?.id"
+  <OvernightUI v-if="game.showOvernightUi" :summary="game.daySummary" @exit="onExitOvernightUI" />
+  <ConstructionUI v-if="game.showConstructionUi"
+      :activeId="game.activeConstruction?.id"
       @construct="onApproveConstruction"
       @suspend="onSuspendConstruction"
       @exit="onExitConstructionUI"

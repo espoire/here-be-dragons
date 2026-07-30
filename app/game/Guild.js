@@ -2,7 +2,8 @@ import Settings from '../Settings.js';
 
 /** @fileoverview A model object representing the Heroes' Guild's persistent state. */
 export default class Guild {
-  /** @type {string?} */ static activeConstructionId = Settings.test.initialGuildConstruction;
+  /** @type {string?} */ static #activeConstructionId = Settings.test.initialGuildConstruction;
+  static get activeConstructionId() { return Guild.#activeConstructionId; }
 
   static newHeroXp = 0; // Amount of XP new Heroes start with.
   static newHeroStamina = 10; // Amount of maximum stamina new Heroes start with.
@@ -15,9 +16,11 @@ export default class Guild {
    * @param {Construction?} construction The construction to set as active, or null to clear the active construction.
    * @returns {Construction?} The construction that was set as active, or null if it failed some kind of validation check.
    */
-  static setConstruction(construction, day = 0, assigneeName, approverName = 'Jenny Erik, Guild Paper Pusher') {
-    Guild.activeConstructionId = construction?.id;
+  static setActiveConstruction(construction, day = 0, assigneeName, approverName = 'Jenny Erik, Guild Paper Pusher') {
+    Guild.#activeConstructionId = construction?.id;
     construction?.activate(day, assigneeName, approverName);
     return construction;
   }
+
+  static clearActiveConstruction() { Guild.#activeConstructionId = null; }
 }

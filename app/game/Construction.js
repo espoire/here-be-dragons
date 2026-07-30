@@ -8,72 +8,72 @@ const definitions = [{
   description: 'Erect the Guild Hall',
   justificationText: 'Provides a permanent headquarters for Guild operations.',
   benefitText: 'Members returning before nightfall receive 1 Coin.',
-  benefit: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the 1 Coin benefit.
+  onComplete: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the 1 Coin benefit.
   completionComment: 'At last I lay down my blade, the Guild shall guard this world now.',
-  materials: [
-    { id: 'coin', amount: 50 },
-    { id: 'stone', amount: 20 },
-    { id: 'wood', amount: 10 },
-    { id: 'ore', amount: 4 },
-    { id: 'cloth', amount: 4 },
-  ],
+  materials: {
+    coin: 50,
+    stone: 20,
+    wood: 10,
+    ore: 4,
+    cloth: 4,
+  },
 }, {
   id: 'quartermaster',
   name: 'Quartermaster',
   description: 'Construct a Guild Storehouse & Hire a Quartermaster',
   justificationText: "Manages the Guild's growing inventory of resources and supplies.",
   benefitText: 'The Quartermaster allocates to Heroes returning before nightfall: an additional resource of up to 2 types gathered during their expedition, replacing the nightly 1 Coin allowance.',
-  benefit: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the bonus items benefit.
+  onComplete: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the bonus items benefit.
   completionComment: 'About time, I was getting tired of someone "misplacing" a bit of everything I brought home.',
-  materials: [
-    { id: 'coin', amount: 10 },
-    { id: 'wood', amount: 8 },
-    { id: 'stone', amount: 5 },
-    { id: 'herbs', amount: 5 },
-    { id: 'ore', amount: 2 },
-  ],
+  materials: {
+    coin: 10,
+    wood: 8,
+    stone: 5,
+    herbs: 5,
+    ore: 2,
+  },
 }, {
   id: 'training-grounds',
   name: 'Training Grounds',
   description: 'Construct a Guild Training Grounds',
   justificationText: 'Provides a safe and controlled environment for new Guild recruits to train and hone their skills.',
   benefitText: 'New Heroes begin their service with 2 XP.',
-  benefit: () => { Guild.newHeroXp += 2; },
+  onComplete() { Guild.newHeroXp += 2; },
   completionComment: 'I wonder who will teach? Maybe I will volunteer when I retire from adventuring.',
-  materials: [
-    { id: 'coin', amount: 5 },
-    { id: 'wood', amount: 10 },
-    { id: 'stone', amount: 2 },
-  ],
+  materials: {
+    coin: 5,
+    wood: 10,
+    stone: 2,
+  },
 }, {
   id: 'dormitory',
   name: 'Dormitory',
   description: 'Construct a Dormitory for the Guild Adventurers',
   justificationText: 'Provides a safe and comfortable place for Guild members to rest and recover after their adventures.',
   benefitText: 'All Heroes gain +2 maximum stamina.',
-  benefit: () => { Guild.newHeroStamina += 2; Globals.game.hero.maxStamina += 2; },
+  onComplete() { Guild.newHeroStamina += 2; Globals.game.hero.maxStamina += 2; },
   completionComment: 'I hope the beds are better than at the tavern.',
-  materials: [
-    { id: 'coin', amount: 10 },
-    { id: 'herbs', amount: 8 },
-    { id: 'wood', amount: 6 },
-    { id: 'stone', amount: 4 },
-    { id: 'cloth', amount: 2 },
-  ],
+  materials: {
+    coin: 10,
+    herbs: 8,
+    wood: 6,
+    stone: 4,
+    cloth: 2,
+  },
 }, {
   id: 'scouts',
   name: 'Scouting Office',
   description: 'Construct & Staff a Scouting Office',
   justificationText: 'Enables the Guild to remain informed about the surrounding territories.',
   benefitText: 'Guild Heroes may adventure 1 additional tile farther afield.',
-  benefit: () => { Guild.mapRadius += 1; },
+  onComplete() { Guild.mapRadius += 1; },
   completionComment: 'I wonder what mysteries await us beyond the horizon?',
-  materials: [
-    { id: 'coin', amount: 10 },
-    { id: 'herbs', amount: 6 },
-    { id: 'wood', amount: 10 },
-    { id: 'stone', amount: 2 },
-  ],
+  materials: {
+    coin: 10,
+    herbs: 6,
+    wood: 10,
+    stone: 2,
+  },
 }];
 
 export default class Construction {
@@ -139,10 +139,11 @@ export default class Construction {
   /** @type {string} The name of this construction, as displayed on the construction requisition form's "Project" field. */ description;
   /** @type {string} The justification text of this construction, as displayed on the construction requisition form's "Justification" field. */ justificationText;
   /** @type {string} The benefit text of this construction, as displayed on the construction requisition form's "Expected Benefit" field. */ benefitText;
+  /** @type {function?} A function to run once when this construction is completed, to apply its benefit. */ onComplete;
   /** @type {string} The comment text the hero writes in the margins of the nightly report, when this construction is completed. */ completionComment;
-  /** @type {{ id: string, amount: number }[]} The materials required for this construction. */ materials;
+  /** @type {{ [resourceType: string]: number }} The materials required for this construction. */ materials;
 
-  /** @type {Object<string, number>} The progress of materials collected for this construction, corresponding to the materials array. */ materialsProgress = {};
+  /** @type {{ [resourceType: string]: number }} The progress of materials collected for this construction, corresponding to the materials array. */ materialsProgress = {};
   /** @type {string?} The name of the player's active hero at the time this construction was initiated, or null if construction not yet begun. Displayed on the form. */ assigneeName = null;
   /** @type {string?} The generated NPC name of the fictional Guild bureaucrat who approved this construction, or null if construction not yet begun. Displayed on the form. */ approverName = null;
   /** @type {string?} The name of the player's hero who handed in the final needed resource, or null if construction not yet complete. To some day be displayed on historical forms. */ finisherName = null;
@@ -156,19 +157,20 @@ export default class Construction {
   /** @type {boolean} Whether this construction has been completed. */
   get completed() { return this.completedDay != null; }
 
-  constructor({ id, name, description, justificationText, benefitText, completionComment, materials }) {
+  constructor({ id, name, description, justificationText, benefitText, onComplete, completionComment, materials }) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.justificationText = justificationText;
     this.benefitText = benefitText;
+    this.onComplete = onComplete;
     this.completionComment = completionComment;
 
-    materials = Settings.test.easyConstructions ? [{ id: 'coin', amount: 1 }] : materials;
+    materials = Settings.test.easyConstructions ? { coin: 1 } : materials;
     this.materials = materials;
 
     // Prefill the materialsProgress object with zeros for each material.
-    for (const { id } of materials) this.materialsProgress[id] = 0;
+    for (const id in materials) this.materialsProgress[id] = 0;
   }
 
   /**
@@ -182,13 +184,13 @@ export default class Construction {
     const turnedIn = {};
     let turnedInAny = false;
 
-    for (const { id, amount } of this.materials) {
+    for (const id in this.materials) {
+      const amount = this.materials[id];
       const available = resources[id] ?? 0;
       const needed = amount - (this.materialsProgress[id] ?? 0);
       const toTurnIn = Math.min(available, needed);
 
       if (toTurnIn > 0) {
-        resources[id] = available - toTurnIn;
         this.materialsProgress[id] = (this.materialsProgress[id] ?? 0) + toTurnIn;
         turnedIn[id] = toTurnIn;
         turnedInAny = true;
@@ -210,7 +212,8 @@ export default class Construction {
   completeMaybe(day, currentHeroName) {
     if (this.completed) return true;
     
-    for (const { id, amount } of this.materials) {
+    for (const id in this.materials) {
+      const amount = this.materials[id];
       if ((this.materialsProgress[id] ?? 0) < amount) return false;
     }
 
@@ -228,6 +231,7 @@ export default class Construction {
   #complete(day, currentHeroName) {
     this.completedDay = day;
     this.finisherName = currentHeroName;
+    if (typeof this.onComplete === 'function') this.onComplete();
   }
 
   /**
@@ -239,6 +243,15 @@ export default class Construction {
     this.assigneeName = assigneeName;
     this.approverName = approverName;
     this.startedDay = day;
+  }
+
+  toVue() {
+    return {
+      id: this.id,
+      name: this.name,
+      materials: { ...this.materials }, // Clone to avoid Vue-proxying the main game data object.
+      materialsProgress: { ...this.materialsProgress }, // Clone to avoid Vue-proxying the main game data object.
+    };
   }
 }
 

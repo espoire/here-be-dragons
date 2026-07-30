@@ -1,10 +1,10 @@
-import { randBool } from "../util/random.js";
-import NodeType from "./NodeType.js";
+import { randBool } from "../../util/random.js";
+import WorldTileType from "./WorldTileType.js";
 
-export default class Node {
+export default class WorldTile {
   /** @type {number} */ x;
   /** @type {number} */ y;
-  /** @type {NodeType} */ type;
+  /** @type {WorldTileType} */ type;
   /** @type {boolean} */ visited = false;
 
   get renderX() { return this.x + this.y / 2; }
@@ -19,10 +19,10 @@ export default class Node {
     this.y = y;
 
     if (x === 0 && y === 0) {
-      this.type = NodeType.getById('hub');
+      this.type = WorldTileType.getById('hub');
       this.visited = true;
     } else {
-      this.type = NodeType.spawn();
+      this.type = WorldTileType.spawn();
     }
   }
 
@@ -30,6 +30,17 @@ export default class Node {
     if (!this.type.decay) return;
 
     const decayChance = 1 - Math.pow(1 - this.type.decay, days);
-    if (randBool(decayChance)) this.type = NodeType.spawn();
+    if (randBool(decayChance)) this.type = WorldTileType.spawn();
+  }
+
+  toVue() {
+    return {
+      x: this.x,
+      y: this.y,
+      renderX: this.renderX,
+      renderY: this.renderY,
+      type: this.type,
+      visited: this.visited,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { weightedRandomArrayElement } from "../util/random.js";
+import { weightedRandomArrayElement } from "../../util/random.js";
 
 const definitions = [{
   id: 'hub',
@@ -44,16 +44,16 @@ const definitions = [{
 /**
  * A class representing and managing the different types of map nodes in the game.
  */
-export default class NodeType {
-  /** @type {Map<string, NodeType>} */
+export default class WorldTileType {
+  /** @type {Map<string, WorldTileType>} */
   static #byId = new Map();
-  /** @type {NodeType[]} */
+  /** @type {WorldTileType[]} */
   static #list = [];
 
   static loadDefinitions() {
     if (this.#list.length) return;
     for (const def of definitions) {
-      const nodeType = new NodeType(def);
+      const nodeType = new WorldTileType(def);
       nodeType.index = this.#list.length;
 
       this.#byId.set(nodeType.id, nodeType);
@@ -89,4 +89,4 @@ export default class NodeType {
   }
 }
 
-NodeType.loadDefinitions();
+WorldTileType.loadDefinitions();

@@ -29,18 +29,18 @@ defineProps({
         <h4>Materials Required:</h4>
         <div class="spaced-horizontal-list-row">
           <div
-              v-for="resource in construction.materials"
-              :key="resource.id"
+              v-for="(amount, resource) in construction.materials"
+              :key="resource"
           >
-            {{ resource.amount }}x {{ resource.id }}
+            {{ amount }}x {{ resource }}
           </div>
         </div>
       </template>
       <template v-else>
         <h4>Materials Procurement Progress:</h4>
         <div class="spaced-horizontal-list-row">
-          <div v-for="req in construction.materials" :key="req.id">
-            {{ construction.materialsProgress[req.id] ?? 0 }} of {{ req.amount }} {{ req.id }}
+          <div v-for="(amount, resource) in construction.materials" :key="resource">
+            {{ construction.materialsProgress[resource] ?? 0 }} of {{ amount }} {{ resource }}
           </div>
         </div>
       </template>
@@ -76,8 +76,8 @@ defineProps({
       <u v-text="construction.benefitText" />
       <h4>Materials Procurement Progress:</h4>
       <div class="spaced-horizontal-list-row">
-        <div v-for="req in construction.materials" :key="req.id">
-          {{ construction.materialsProgress[req.id] ?? 0 }} of {{ req.amount }} {{ req.id }}
+        <div v-for="(amount, resource) in construction.materials" :key="resource">
+          {{ construction.materialsProgress[resource] ?? 0 }} of {{ amount }} {{ resource }}
         </div>
       </div>
       <div class="slight-vertical-gap" />

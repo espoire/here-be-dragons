@@ -15,7 +15,7 @@ const props = inject('props');
   <div class="vueAppWrap">
     <TitleScreen v-if="props.mode === modes.title" :userSettings="props.userSettings" />
     <SettingsScreen v-if="props.mode === modes.settings" :settings="props.userSettings" />
-    <GameScreen v-if="props.mode === modes.game" :hero="props.hero" />
+    <GameScreen v-if="props.mode === modes.game" :hero="props.hero" :world="props.world" :game="props.game" />
   </div>
 </template>
 

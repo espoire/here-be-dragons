@@ -1,4 +1,6 @@
+import Globals from "../Globals.js";
 import Settings from "../Settings.js";
+import Guild from "./Guild.js";
 
 const definitions = [{
   id: 'guild-hall',
@@ -6,6 +8,7 @@ const definitions = [{
   description: 'Erect the Guild Hall',
   justificationText: 'Provides a permanent headquarters for Guild operations.',
   benefitText: 'Members returning before nightfall receive 1 Coin.',
+  benefit: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the 1 Coin benefit.
   completionComment: 'At last I lay down my blade, the Guild shall guard this world now.',
   materials: [
     { id: 'coin', amount: 50 },
@@ -20,6 +23,7 @@ const definitions = [{
   description: 'Construct a Guild Storehouse & Hire a Quartermaster',
   justificationText: "Manages the Guild's growing inventory of resources and supplies.",
   benefitText: 'The Quartermaster allocates to Heroes returning before nightfall: an additional resource of up to 2 types gathered during their expedition, replacing the nightly 1 Coin allowance.',
+  benefit: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the bonus items benefit.
   completionComment: 'About time, I was getting tired of someone "misplacing" a bit of everything I brought home.',
   materials: [
     { id: 'coin', amount: 10 },
@@ -34,6 +38,7 @@ const definitions = [{
   description: 'Construct a Guild Training Grounds',
   justificationText: 'Provides a safe and controlled environment for new Guild recruits to train and hone their skills.',
   benefitText: 'New Heroes begin their service with 2 XP.',
+  benefit: () => { Guild.newHeroXp += 2; },
   completionComment: 'I wonder who will teach? Maybe I will volunteer when I retire from adventuring.',
   materials: [
     { id: 'coin', amount: 5 },
@@ -46,6 +51,7 @@ const definitions = [{
   description: 'Construct a Dormitory for the Guild Adventurers',
   justificationText: 'Provides a safe and comfortable place for Guild members to rest and recover after their adventures.',
   benefitText: 'All Heroes gain +2 maximum stamina.',
+  benefit: () => { Guild.newHeroStamina += 2; Globals.game.hero.maxStamina += 2; },
   completionComment: 'I hope the beds are better than at the tavern.',
   materials: [
     { id: 'coin', amount: 10 },
@@ -60,6 +66,7 @@ const definitions = [{
   description: 'Construct & Staff a Scouting Office',
   justificationText: 'Enables the Guild to remain informed about the surrounding territories.',
   benefitText: 'Guild Heroes may adventure 1 additional tile farther afield.',
+  benefit: () => { Guild.mapRadius += 1; },
   completionComment: 'I wonder what mysteries await us beyond the horizon?',
   materials: [
     { id: 'coin', amount: 10 },

@@ -96,8 +96,8 @@ const heroGenderWeights = [
 export default class Hero {
   /** @type {string} The name of this hero. */ #name;
   /** @type {string} The gender of this hero. No gameplay effects, but alters some naming and dialogue text. */ #gender;
-  /** @type {number} How far this hero can still move before the end of today. */ #stamina = 10;
-  /** @type {number} How far this hero can move in a day. */ #maxStamina = 10;
+  /** @type {number} How far this hero can still move before the end of today. */ #stamina = 0;
+  /** @type {number} How far this hero can move in a day. */ #maxStamina = 0;
   /** @type {number} The current level of this hero. */ #level = 1;
   /** @type {number} The current experience points of this hero. */ #xp = 0;
   /** @type {number} The experience points required for this hero to reach the next level. */ #xpToNextLevel = 10;

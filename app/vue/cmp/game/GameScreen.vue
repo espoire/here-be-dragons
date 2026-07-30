@@ -8,6 +8,7 @@ import { deepClone } from '/app/util/object.js';
 import Constants from '/app/Constants.js';
 import Globals from '/app/Globals.js';
 import { getQuartermasterBonusResources } from '/app/game/quartermaster.js';
+import Construction from '../../../game/Construction.js';
 
 const props = defineProps({
   hero: {
@@ -24,7 +25,7 @@ const props = defineProps({
 
 const map = [];
 const nodes = [];
-const radius = 5;
+const radius = Guild.mapRadius;
 const coordinateOffset = { x: radius, y: radius };
 
 function initMap() {
@@ -193,7 +194,7 @@ function onExitConstructionUI() {
   advanceDay();
 }
 
-const construction = shallowRef(Guild.getConstruction());
+const construction = shallowRef(Construction.getById(Guild.activeConstructionId));
 function onApproveConstruction(newConstruction) {
   construction.value = Guild.setConstruction(newConstruction, day.value, Globals.game.hero.name);
   console.log('Approved construction:', construction.value);

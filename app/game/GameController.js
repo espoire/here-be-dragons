@@ -3,6 +3,7 @@ import Settings from '../Settings.js';
 import Constants from '../Constants.js';
 import UserSettingsManager from '../UserSettingsManager.js';
 import Hero from './Hero.js';
+import Guild from './Guild.js';
 
 const { modes } = Constants;
 
@@ -28,8 +29,11 @@ export default class GameController {
   }
 
   initialize() {
-    this.hero = new Hero();
-    this.hero.updateVue();
+    const hero = new Hero();
+    hero.xp = Guild.newHeroXp;
+    hero.maxStamina = hero.stamina = Guild.newHeroStamina;
+    hero.updateVue();
+    this.hero = hero;
   }
 
   static onSettingsClicked() {

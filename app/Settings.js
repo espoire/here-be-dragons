@@ -8,7 +8,10 @@ const Settings = {
     // disableTestMode: true,
 
     // Startup
-    initialGuildConstruction: 'guild-hall', // string construction ID
+    // initialGuildConstruction: 'guild-hall', // string construction ID
+
+    // Re-config
+    easyConstructions: true, // If true, all constructions will cost only 1 coin to complete.
 
     log: {
       modalEventRouting: true,

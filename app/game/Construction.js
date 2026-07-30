@@ -1,3 +1,5 @@
+import Settings from "../Settings.js";
+
 const definitions = [{
   id: 'guild-hall',
   name: 'Guild Hall',
@@ -110,6 +112,11 @@ export default class Construction {
     return this.#byId.has(id);
   }
 
+  /** @returns {Construction[]} All constructions which are not already completed. In future, will also check prerequisites. */
+  static getAvailableConstructions() {
+    return this.#list.filter(construction => !construction.completed);
+  }
+
   /** @type {number} */ index;
   /** @type {string} The textual programmatic ID of this construction. */ id;
   /** @type {string} The name of this construction, as displayed on the during-exploration "current goal" HUD. */ name;
@@ -140,6 +147,8 @@ export default class Construction {
     this.justificationText = justificationText;
     this.benefitText = benefitText;
     this.completionComment = completionComment;
+
+    materials = Settings.test.easyConstructions ? [{ id: 'coin', amount: 1 }] : materials;
     this.materials = materials;
 
     // Prefill the materialsProgress object with zeros for each material.

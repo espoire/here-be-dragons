@@ -2,7 +2,7 @@
 
 const Globals = {
   /** @type {GameController} */
-  gameController: null,
+  game: null,
 };
 
 window.expose('Globals', Globals);

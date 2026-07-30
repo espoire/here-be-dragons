@@ -7,6 +7,7 @@ import ConstructionUI from './ConstructionUI.vue';
 import Guild from '/app/game/Guild.js';
 import { deepClone } from '/app/util/object.js';
 import Constants from '/app/Constants.js';
+import Globals from '../../../Globals.js';
 
 // const props = defineProps({
 //   // settings: {
@@ -127,7 +128,7 @@ function returnedHomeMaybe(returnedHome) {
     if (turnedIn) {
       console.log('Turned in resources for construction:', turnedIn);
 
-      const completed = construction.value.completeMaybe(day.value);
+      const completed = construction.value.completeMaybe(day.value, Globals.game.hero.name);
       if (completed) {
         daySummary.constructionCompleted = construction.value;
 
@@ -175,7 +176,7 @@ function onExitConstructionUI() {
 
 const construction = shallowRef(Guild.getConstruction());
 function onApproveConstruction(newConstruction) {
-  construction.value = Guild.setConstruction(newConstruction, day.value);
+  construction.value = Guild.setConstruction(newConstruction, day.value, Globals.game.hero.name);
   console.log('Approved construction:', construction.value);
   onExitConstructionUI();
 }

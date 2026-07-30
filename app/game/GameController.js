@@ -2,12 +2,16 @@ import ThreeVueInterface from '../VueInterface.js';
 import Settings from '../Settings.js';
 import Constants from '../Constants.js';
 import UserSettingsManager from '../UserSettingsManager.js';
+import Hero from './Hero.js';
 
 const { modes } = Constants;
 
 export default class GameController {
   /** @type {modes} */
   mode = modes.title;
+
+  /** @type {Hero} */
+  hero;
 
   begin() {
     UserSettingsManager.syncVue();
@@ -19,7 +23,12 @@ export default class GameController {
   }
 
   onAdvanceFromTitleScreen() {
+    this.initialize();
     GameController.setMode(modes.game);
+  }
+
+  initialize() {
+    this.hero = new Hero();
   }
 
   static onSettingsClicked() {

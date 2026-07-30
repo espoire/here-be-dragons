@@ -29,7 +29,7 @@ function doSave() {
 }
 
 function onClickReturnButton() {
-  Globals.gameController.showWorldMap();
+  // Globals.game.showWorldMap();
 }
 
 /** @param {'up' | 'down'} direction */

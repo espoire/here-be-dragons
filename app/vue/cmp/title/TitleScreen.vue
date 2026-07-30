@@ -13,7 +13,7 @@ function onClickEpithet() {
 }
 
 function onClickStart() {
-  Globals.gameController.onAdvanceFromTitleScreen()
+  Globals.game.onAdvanceFromTitleScreen()
 }
 </script>
 

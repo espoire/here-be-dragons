@@ -12,5 +12,5 @@ initGlobals(game);
 setTimeout(() => game.begin()); // Delay to allow initial rendering, component mounting, etc.
 
 function initGlobals(game) {
-  Globals.gameController = game;
+  Globals.game = game;
 }

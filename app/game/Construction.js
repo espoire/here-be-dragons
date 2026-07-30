@@ -185,20 +185,33 @@ export default class Construction {
   /**
    * Checks whether the construction is complete, and if so, sets the completedDay property to the current day.
    * @param {number} day The current day, to set as completedDay if the construction is complete.
+   * @param {string} currentHeroName The name of the hero currently completing the construction.
    * @mutates this.completedDay if the construction is completed by this turn's resource turn-in.
    * @returns {boolean} Whether the construction is now complete.
    * 
    * No-op if the construction is already complete. Reacting to the completion of the construction is the caller's responsibility.
    */
-  completeMaybe(day) {
+  completeMaybe(day, currentHeroName) {
     if (this.completed) return true;
     
     for (const { id, amount } of this.materials) {
       if ((this.materialsProgress[id] ?? 0) < amount) return false;
     }
 
-    this.completedDay = day;
+    this.#complete(day, currentHeroName);
     return true;
+  }
+
+  /**
+   * @param {number} day
+   * @param {string} currentHeroName
+   * @mutates this.completedDay
+   * @mutates this.finisherName
+   * @private
+   */
+  #complete(day, currentHeroName) {
+    this.completedDay = day;
+    this.finisherName = currentHeroName;
   }
 
   /**

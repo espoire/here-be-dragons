@@ -78,19 +78,23 @@ export default class GameController {
   onClickMapTile(x, y) {
     if (this.hero.stamina <= 0) return; // Can't move if out of stamina
 
-    this.#moveToNode(x, y);
+    this.#moveHeroTo(x, y);
     this.endOfDayMaybe();
   }
 
-  #moveToNode(x, y) {
+  #moveHeroTo(x, y) {
     // Update hero position & spend stamina
     this.hero.position = { x, y };
     this.hero.stamina -= 1;
     
+    this.#visitTile(x, y);
+  }
+
+  #visitTile(x, y, eventPrefix = '') {
     // If tile is fresh (not visited), collect resources if applicable
     const tile = this.worldMap.tileAt({ x, y });
     if (!tile) return;
-    this.collectResourceFromTile(tile);
+    this.collectResourceFromTile(tile, eventPrefix);
     
     // Mark tile as visited
     if (!tile.visited) this.daySummary.nodesVisited = (this.daySummary.nodesVisited ?? 0) + 1;
@@ -98,13 +102,13 @@ export default class GameController {
     this.worldMap.updateCellVue(x, y);
   }
 
-  collectResourceFromTile(tile) {  
+  collectResourceFromTile(tile, eventPrefix = '') {  
     if (tile?.visited !== false) return; // Only collect resources from extant, unvisited tiles
 
     const resource = tile.type.resource;
     if (!resource) return;
 
-    GameController.setVueEventText(`+1 ${resource}!`);
+    GameController.setVueEventText(`${eventPrefix} +1 ${resource}!`);
     this.hero.gainResource(resource, 1);
   }
 
@@ -235,5 +239,8 @@ export default class GameController {
     GlobalVueProps.game.time = 'day';
     GlobalVueProps.game.eventText = '';
     this.daySummary = new DaySummary();
+
+    // Harvest current tile, if applicable
+    this.#visitTile(this.hero.position.x, this.hero.position.y, 'Awoke in the field, and harvested: ');
   }
 }

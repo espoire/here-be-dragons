@@ -119,7 +119,7 @@ export default class GameController {
 
   returnedHomeMaybe(returnedHome) {
     if (!returnedHome) {
-      this.restQuality = -2; // Poor quality rest for camping in the wild.
+      this.restQuality = -4; // Poor quality rest for camping in the wild.
       GameController.setVueEventText('Out of stamina! Making camp for the night...');
       return;
     }

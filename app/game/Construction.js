@@ -7,18 +7,31 @@ const definitions = [{
   name: 'Guild Hall',
   description: 'Erect the Guild Hall',
   justificationText: 'Provides a permanent headquarters for Guild operations.',
-  benefitText: 'Members returning before nightfall receive 1 Coin.',
-  onComplete: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the 1 Coin benefit.
+  benefitText: 'Prerequisite for many other constructions.',
+  onComplete: null, // No run-once function, for now.
   completionComment: 'At last I lay down my blade, the Guild shall guard this world now.',
   materials: {
-    coin: 50,
-    stone: 20,
-    wood: 10,
-    ore: 4,
-    cloth: 4,
+    coin: 20,
+    stone: 10,
+    wood: 5,
+    ore: 2,
+    cloth: 2,
   },
 }, {
-  id: 'quartermaster',
+  id: 'quartermaster-1',
+  prerequisite: 'guild-hall',
+  name: 'Hero Payroll',
+  description: 'Hire a Guild Payroll Clerk',
+  justificationText: 'Ensure that Heroes are compensated for their efforts in a timely manner.',
+  benefitText: 'The Guild Payroll Clerk allocates to Heroes returning before nightfall: 1 Coin.',
+  onComplete: null, // No run-once function; completeness is checked by quartermaster.js to decide whether to give the 1 Coin benefit.
+  completionComment: 'I am glad to be paid for my work, but I would do this regardless.',
+  materials: {
+    coin: 25,
+  },
+}, {
+  id: 'quartermaster-2',
+  prerequisite: 'quartermaster-1',
   name: 'Quartermaster',
   description: 'Construct a Guild Storehouse & Hire a Quartermaster',
   justificationText: "Manages the Guild's growing inventory of resources and supplies.",
@@ -33,7 +46,8 @@ const definitions = [{
     ore: 2,
   },
 }, {
-  id: 'training-grounds',
+  id: 'training-grounds-1',
+  prerequisite: 'guild-hall',
   name: 'Training Grounds',
   description: 'Construct a Guild Training Grounds',
   justificationText: 'Provides a safe and controlled environment for new Guild recruits to train and hone their skills.',
@@ -46,11 +60,25 @@ const definitions = [{
     stone: 2,
   },
 }, {
-  id: 'dormitory',
+  id: 'training-grounds-2',
+  prerequisites: ['training-grounds-1', 'max-stamina-1'],
+  name: 'Recruit Trainer',
+  description: 'Hire a Full-Time Guild Recruit Trainer',
+  justificationText: 'Provides dedicated training so new Guild Recruits are well-prepared for their adventures.',
+  benefitText: 'New Heroes begin their service with 1 additional XP.',
+  onComplete() { Guild.newHeroXp += 1; },
+  completionComment: "It's about time the instructor got paid.",
+  materials: {
+    coin: 50,
+    paper: 2,
+  },
+}, {
+  id: 'max-stamina-1',
+  prerequisite: 'guild-hall',
   name: 'Dormitory',
   description: 'Construct a Dormitory for the Guild Adventurers',
   justificationText: 'Provides a safe and comfortable place for Guild members to rest and recover after their adventures.',
-  benefitText: 'All Heroes gain +2 maximum stamina.',
+  benefitText: 'All Heroes gain +2 maximum stamina.', // For a total of 12
   onComplete() { Guild.newHeroStamina += 2; Globals.game.hero.maxStamina += 2; },
   completionComment: 'I hope the beds are better than at the tavern.',
   materials: {
@@ -58,10 +86,57 @@ const definitions = [{
     herbs: 8,
     wood: 6,
     stone: 4,
-    cloth: 2,
+    cloth: 1,
   },
 }, {
-  id: 'scouts',
+  id: 'max-stamina-2',
+  prerequisite: 'max-stamina-1',
+  name: "Cobbler's Office",
+  description: 'Hire a Full-Time Cobbler for the Guild & Construct a Guild Boot Workshop',
+  justificationText: "Provides a dedicated cobbler to maintain and repair the Guild members' boots, ensuring they are always ready for adventure.",
+  benefitText: 'All Heroes gain +1 maximum stamina.', // For a total of 13
+  onComplete() { Guild.newHeroStamina += 1; Globals.game.hero.maxStamina += 1; },
+  completionComment: "My coin purse shall ne'er again be burdened with the price of so many boots. ...wait, the Guild boots ARE going to be free, right?",
+  materials: {
+    coin: 25,
+    leather: 2,
+    cloth: 1,
+    wood: 10,
+    stone: 2,
+  },
+}, {
+  id: 'max-stamina-3',
+  prerequisites: ['quartermaster', 'max-stamina-2'],
+  name: 'Boot Stockpile',
+  description: 'Expand the Storehouse to Amass a Strategic Boot Stockpile',
+  justificationText: 'Ensures the Guild has a sufficient supply of boots for all Heroes.',
+  benefitText: 'All Heroes gain +1 maximum stamina.', // For a total of 14
+  onComplete() { Guild.newHeroStamina += 1; Globals.game.hero.maxStamina += 1; },
+  completionComment: 'No more trading favors to reach the front of the boot queue.',
+  materials: {
+    coin: 100,
+    leather: 10,
+    cloth: 2,
+    wood: 10,
+    stone: 2,
+  },
+}, {
+  id: 'max-stamina-4',
+  prerequisites: ['max-stamina-3', 'map-radius-3'],
+  name: 'Boot Inventory',
+  description: 'Assess the Guild Boot Inventory & Keep Written Records Thereof',
+  justificationText: 'Ensures efficient deployment and adequate supply of boots for all Guild Heroes.',
+  benefitText: 'All Heroes gain +1 maximum stamina.', // For a total of 15
+  onComplete() { Guild.newHeroStamina += 1; Globals.game.hero.maxStamina += 1; },
+  completionComment: 'I am curious where all those missing boots went. To whomever reads these: let me know if we find out?',
+  materials: {
+    coin: 200,
+    paper: 15,
+    wood: 4,
+  },
+}, {
+  id: 'map-radius-1',
+  prerequisite: 'guild-hall',
   name: 'Scouting Office',
   description: 'Construct & Staff a Scouting Office',
   justificationText: 'Enables the Guild to remain informed about the surrounding territories.',
@@ -73,6 +148,35 @@ const definitions = [{
     herbs: 6,
     wood: 10,
     stone: 2,
+  },
+}, {
+  id: 'map-radius-2',
+  prerequisite: 'map-radius-1', // TODO: auto-convert to array, accept `prerequisite` or `prerequisites` equivalently, do not show in available construction options until all prerequisite constructions are complete
+  name: 'Scouting Office Expansion',
+  description: 'Expand the Scouting Office',
+  justificationText: 'Provides additional space and resources for expanding Scouting head count.',
+  benefitText: 'Guild Heroes may adventure 2 additional tiles farther afield.',
+  onComplete() { Guild.mapRadius += 2; },
+  completionComment: 'The Guild is growing, and so is our reach into the unknown.',
+  materials: {
+    coin: 50,
+    wood: 20,
+    stone: 4,
+  },
+}, {
+  id: 'map-radius-3',
+  prerequisites: ['map-radius-2', 'quartermaster'],
+  name: 'Paper Supplier & Stockpile',
+  description: 'Establish a Guild Paper Supplier & Stockpile',
+  justificationText: 'Ensures the Guild has a sufficient supply of paper for maps, reports, and other documentation, meet rising demand from the Scouting Office for map-making.',
+  benefitText: 'Guild Heroes may adventure 3 additional tiles farther afield.',
+  onComplete() { Guild.mapRadius += 3; },
+  completionComment: 'As the only recruit of my cohort who did not receive a copy of our map when I enlisted: about time!',
+  materials: {
+    coin: 100,
+    paper: 10,
+    wood: 20,
+    stone: 4,
   },
 }];
 

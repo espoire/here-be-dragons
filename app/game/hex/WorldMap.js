@@ -11,6 +11,8 @@ export default class WorldMap extends HexTileMap {
       radius,
       (x, y) => new WorldTile(x, y),
     );
+
+    for (const tile of this.tiles) tile.age(10); // Age all tiles to create realistic correlations between neighboring tiles.
   }
 
   updateVue() {
@@ -40,5 +42,11 @@ export default class WorldMap extends HexTileMap {
 
   resetTilesVisited() {
     for (const tile of this.tiles) tile.visited = false;
+  }
+
+  resize(newRadius) {
+    const { newTiles } = super.resize(newRadius, (x, y) => new WorldTile(x, y));
+    for (const tile of newTiles) tile.age(10); // Age new tiles to make the old-edge discontinuity less visible.
+    this.updateVue(); // Can't update only the new tiles, because the backing array has changed and the Vue map needs to be re-rendered.
   }
 }

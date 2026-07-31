@@ -1,3 +1,4 @@
+import Globals from '../Globals.js';
 import Settings from '../Settings.js';
 
 /** @fileoverview A model object representing the Heroes' Guild's persistent state. */
@@ -9,7 +10,7 @@ export default class Guild {
   static newHeroStamina = 10; // Amount of maximum stamina new Heroes start with.
 
   static #mapRadius = 5; // The radius of the map, in hexes, from the Guild Hall to the edge of the map.
-  static set mapRadius(value) { Guild.#mapRadius = value; /* TODO actually resize the current map */ }
+  static set mapRadius(value) { Guild.#mapRadius = value; Globals.game.worldMap.resize(value); }
   static get mapRadius() { return Guild.#mapRadius; }
 
   /**

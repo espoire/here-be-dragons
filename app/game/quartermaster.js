@@ -13,7 +13,7 @@ import Construction from "./Construction.js";
  * @returns {{ [id: string]: number }} A new object representing the resources awarded, if any.
  */
 export function getQuartermasterBonusResources(resourcesToday) {
-  if (Construction.isComplete('quartermaster')) {
+  if (Construction.isComplete('quartermaster-2')) {
     // One of each of two random resource types that were collected today.
     const types = Object.keys(resourcesToday);
     const sample = randomArraySampleWithoutReplacement(types, 2);
@@ -21,7 +21,7 @@ export function getQuartermasterBonusResources(resourcesToday) {
   }
 
   // Runoff to lower-tier bonus if no resources yet given.
-  if (true) { // Placeholder for when we split this construction into multiple tiers; this is the lower rank.
+  if (Construction.isComplete('quartermaster-1')) {
     // One coin, always.
     return { coin: 1 };
   }

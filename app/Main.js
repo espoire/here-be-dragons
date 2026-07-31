@@ -4,6 +4,7 @@ import Globals from './Globals.js';
 import { environmentIsDev } from './util/Util.js';
 import GameController from './game/GameController.js';
 import { runTests } from '../test/TestRunner.js';
+import './DevUtils.js';
 
 if (environmentIsDev()) runTests();
 

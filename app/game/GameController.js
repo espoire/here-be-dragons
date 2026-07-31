@@ -144,7 +144,7 @@ export default class GameController {
       for (const type of bonusTypes) {
         this.hero.gainResource(type, bonus[type]);
       }
-    } else {
+    } else if (Object.keys(this.hero.resourcesToday).length === 0) {
       GameController.setVueEventText('Returned home! No resources collected today, so no bonus.');
     }
   }

@@ -78,8 +78,8 @@ const emit = defineEmits(['exit']);
         <template v-else>
           <p>So far, I have procured the following resources to construct the {{ summary.construction.name }}:</p>
           <div class="spaced-horizontal-list-row">
-            <div v-for="{ id, amount } in summary.construction.materials" :key="id">
-              {{ summary.construction.materialsProgress[id] || 0 }} of {{ amount }} {{ id }}
+            <div v-for="( amount, resource ) in summary.construction.materials" :key="resource">
+              {{ summary.construction.materialsProgress[resource] || 0 }} of {{ amount }} {{ resource }}
             </div>
           </div>
         </template>

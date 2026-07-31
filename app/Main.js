@@ -8,10 +8,9 @@ import './DevUtils.js';
 
 if (environmentIsDev()) runTests();
 
-const game = new GameController();
-initGlobals(game);
-setTimeout(() => game.begin()); // Delay to allow initial rendering, component mounting, etc.
+initGlobals();
+setTimeout(() => Globals.game.begin()); // Delay to allow initial rendering, component mounting, etc.
 
-function initGlobals(game) {
-  Globals.game = game;
+function initGlobals() {
+  Globals.game = new GameController();
 }

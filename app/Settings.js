@@ -1,3 +1,4 @@
+import { ensureArray } from './util/Array.js';
 import { deepClone } from './util/object.js';
 import { deepFreeze, environmentIsDev, educatedGuessIfEnvironmentIsMobile } from './util/Util.js';
 
@@ -9,6 +10,7 @@ const Settings = {
 
     // Startup
     // initialGuildConstruction: 'guild-hall', // string construction ID
+    initialConstructionsComplete: 'guild-hall', // string or string[] construction ID(s)
 
     // Re-config
     easyConstructions: true, // If true, all constructions will cost only 1 coin to complete.
@@ -34,6 +36,10 @@ if (environmentIsDev() && !Settings.test.disableTestMode) {
   console.log('Test mode is enabled.');
 } else {
   Settings.test = {};
+}
+
+if (Settings.test?.initialConstructionsComplete) {
+  Settings.test.initialConstructionsComplete = ensureArray(Settings.test.initialConstructionsComplete);
 }
 
 deepFreeze(Settings.test);

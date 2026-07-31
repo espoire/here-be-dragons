@@ -236,6 +236,16 @@ export default class Construction {
     return construction?.completed;
   }
 
+  static completeMany(constructionIds, day, heroName) {
+    for (const id of constructionIds) {
+      const construction = this.getById(id);
+      if (!construction) continue;
+      if (construction.completed) continue;
+
+      construction.#complete(day, heroName);
+    }
+  }
+
   /** @type {number} */ index;
   /** @type {string} The textual programmatic ID of this construction. */ id;
   /** @type {string} The name of this construction, as displayed on the during-exploration "current goal" HUD. */ name;

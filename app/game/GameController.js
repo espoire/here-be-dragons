@@ -68,6 +68,10 @@ export default class GameController {
     GlobalVueProps.game.day = this.day;
     GlobalVueProps.game.activeConstruction = GameController.getActiveConstruction()?.toVue();
 
+    if (Settings.test?.initialConstructionsComplete?.length) {
+      Construction.completeMany(Settings.test.initialConstructionsComplete, 0, 'Settings');
+    }
+
     this.daySummary = new DaySummary();
   }
 

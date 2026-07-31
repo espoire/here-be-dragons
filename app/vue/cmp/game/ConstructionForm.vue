@@ -23,8 +23,10 @@ defineProps({
         <h4>Justification:</h4>
         <u v-text="construction.justificationText" />
       </template>
-      <h4>Expected Benefit:</h4>
-      <u v-text="construction.benefitText" />
+      <template v-if="construction.benefitText">
+        <h4>Expected Benefit:</h4>
+        <u v-text="construction.benefitText" />
+      </template>
       <template v-if="!construction.wasActive">
         <h4>Materials Required:</h4>
         <div class="spaced-horizontal-list-row">

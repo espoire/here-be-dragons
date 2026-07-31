@@ -7,7 +7,6 @@ const definitions = [{
   name: 'Guild Hall',
   description: 'Erect the Guild Hall',
   justificationText: 'Provides a permanent headquarters for Guild operations.',
-  benefitText: 'Prerequisite for many other constructions.',
   onComplete: null, // No run-once function, for now.
   completionComment: 'At last I lay down my blade, the Guild shall guard this world now.',
   materials: {
@@ -242,8 +241,8 @@ export default class Construction {
   /** @type {string} The name of this construction, as displayed on the during-exploration "current goal" HUD. */ name;
   /** @type {string} The name of this construction, as displayed on the construction requisition form's "Project" field. */ description;
   /** @type {string} The justification text of this construction, as displayed on the construction requisition form's "Justification" field. */ justificationText;
-  /** @type {string} The benefit text of this construction, as displayed on the construction requisition form's "Expected Benefit" field. */ benefitText;
-  /** @type {function?} A function to run once when this construction is completed, to apply its benefit. */ onComplete;
+  /** @type {string?} The benefit text of this construction, as displayed on the construction requisition form's "Expected Benefit" field. */ benefitText;
+  /** @type {(() => void)?} A function to run once when this construction is completed, to apply its benefit. */ onComplete;
   /** @type {string} The comment text the hero writes in the margins of the nightly report, when this construction is completed. */ completionComment;
   /** @type {{ [resourceType: string]: number }} The materials required for this construction. */ materials;
 

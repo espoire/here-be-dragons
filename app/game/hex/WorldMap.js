@@ -4,6 +4,7 @@ import WorldTile from "./WorldTile.js";
 
 /**
  * A game state model class, which handles creating and updating the hex-grid world map.
+ * @extends {HexTileMap<WorldTile>}
  */
 export default class WorldMap extends HexTileMap {
   constructor(radius = 5) {
